@@ -21,36 +21,28 @@ sample = """
 22 11 13  6  5
  2  0 12  3  7"""
 
-def dump(board):
-    # for x in range(5):
-    #     print(board[x*5:x*5+5])
-    pass
-
-def winset(board, pos):
-    return set([board[x] for x in pos])
+# Find the numbers on the card at the positions in pos
+def winset(card, pos):
+    return frozenset([card[x] for x in pos])
 
 # Return a list of all the winning sets
-def all_winners(board):
+def all_winners(card):
     w = []
-    for x in range(0, len(board), 5):
+    for x in range(0, len(card), 5):
         # Rows
-        w.append(winset(board, range(x,x+5)))
+        w.append(winset(card, range(x,x+5)))
         # Cols
-        w.append(winset(board,range(x//5, len(board), 5)))
+        w.append(winset(card,range(x//5, len(card), 5)))
     return w
 
-def winner(board):
-    return any([len(x)==0 for x in board])
+def winner(called, board):
+    return any([x.issubset(called) for x in board])
 
-def remaining(board):
+def remaining(called, board):
     rem = set()
     for s in board:
         rem |= s
-    return rem
-
-def play(board, ball):
-    ball = set([ball])
-    return [x-ball for x in board]
+    return rem - called
 
 def parse(input):
     lines = input.splitlines()
@@ -74,13 +66,12 @@ def parse(input):
 def part1(input):
     (numbers, boards) = input
 
+    called = set()
     for x in numbers:
+        called.add(x)
         for b in range(len(boards)):
-            boards[b] = play(boards[b], x)
-            if winner(boards[b]):
-                return sum(remaining(boards[b])) * x
-            # dump(boards[b])
-            # print(x, boards[b])
+            if winner(called, boards[b]):
+                return sum(remaining(called, boards[b])) * x
     return None
 
 
@@ -89,17 +80,16 @@ def part2(input):
 
     last = 0
     losers = set(range(len(boards)))
+    called = set()
     for x in numbers:
         if len(losers) == 0:
             break
+        called.add(x)
         wins = set()
         for b in losers:
-            boards[b] = play(boards[b], x)
-            if winner(boards[b]):
+            if winner(called, boards[b]):
                 wins.add(b)
-                last = sum(remaining(boards[b])) * x
-            # dump(boards[b])
-            # print(x, boards[b])
+                last = sum(remaining(called, boards[b])) * x
         losers -= wins
     return last
 
@@ -132,9 +122,9 @@ def runAll(sample, actual):
     if len(actual) > 10:
         p1 = part1(parse(actual))
         print(f"{GREEN}  Part 1: {p1}{RED}")
-    p2 = part2(parse(actual))
-    if p2 is not None:
-        print(f"{GREEN}  Part 2: {p2}{RESET}")
+        p2 = part2(parse(actual))
+        if p2 is not None:
+            print(f"{GREEN}  Part 2: {p2}{RESET}")
 
 
 actual = """
