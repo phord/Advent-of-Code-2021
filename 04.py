@@ -21,6 +21,37 @@ sample = """
 22 11 13  6  5
  2  0 12  3  7"""
 
+def dump(board):
+    # for x in range(5):
+    #     print(board[x*5:x*5+5])
+    pass
+
+def winset(board, pos):
+    return set([board[x] for x in pos])
+
+# Return a list of all the winning sets
+def all_winners(board):
+    w = []
+    for x in range(0, len(board), 5):
+        # Rows
+        w.append(winset(board, range(x,x+5)))
+        # Cols
+        w.append(winset(board,range(x//5, len(board), 5)))
+    return w
+
+def winner(board):
+    return any([len(x)==0 for x in board])
+
+def remaining(board):
+    rem = set()
+    for s in board:
+        rem |= s
+    return rem
+
+def play(board, ball):
+    ball = set([ball])
+    return [x-ball for x in board]
+
 def parse(input):
     lines = input.splitlines()
     if len(lines) < 1:
@@ -34,38 +65,11 @@ def parse(input):
         b.append([])
         for j in range(5):
             b[-1].extend(boards[row+j])
+
+    # Convert boards to board-winning-sets
+    b = [all_winners(x) for x in b]
+
     return (numbers, b)
-
-def dump(board):
-    for x in range(5):
-        print(board[x*5:x*5+5])
-
-def winset(board, pos):
-    for x in pos:
-        if board[x] is not None:
-            return False
-    # print("Winner: ", pos, list(pos), [(x,board[x+1]) for x in pos])
-    # dump(board)
-    return True
-
-def winner(board):
-    # # Diagonal
-    # if winset(board, range(0, len(board), 6)):
-    #     return True
-    # # Diagonal
-    # if winset(board, range(4, len(board)-4, 4)):
-    #     return True
-    for x in range(0, len(board), 5):
-        # Rows
-        if winset(board, range(x,x+5)):
-            return True
-        # Cols
-        if winset(board, range(x//5, len(board), 5)):
-            return True
-    return False
-
-def play(board, ball):
-    return [None if x==ball else x for x in board ]
 
 def part1(input):
     (numbers, boards) = input
@@ -74,18 +78,15 @@ def part1(input):
         for b in range(len(boards)):
             boards[b] = play(boards[b], x)
             if winner(boards[b]):
-                return sum([ a for a in boards[b] if a]) * x
+                return sum(remaining(boards[b])) * x
             # dump(boards[b])
-            print(x, boards[b])
+            # print(x, boards[b])
     return None
 
 
 def part2(input):
     (numbers, boards) = input
 
-    for b in boards:
-        dump(b)
-        print("---")
     last = 0
     losers = set(range(len(boards)))
     for x in numbers:
@@ -96,7 +97,7 @@ def part2(input):
             boards[b] = play(boards[b], x)
             if winner(boards[b]):
                 wins.add(b)
-                last = sum([ a for a in boards[b] if a]) * x
+                last = sum(remaining(boards[b])) * x
             # dump(boards[b])
             # print(x, boards[b])
         losers -= wins
