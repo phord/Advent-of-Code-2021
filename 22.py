@@ -26,25 +26,27 @@ def runAll(sample, actual):
     RED = Fore.RED
     RESET = Style.RESET_ALL
 
-    sample = parse(sample)
-    actual = parse(actual)
+    print(f"{CYAN}Parse:{RED}")
+    s = parse(sample)
+    if actual.strip():
+        a = parse(actual)
 
-    print(f"{CYAN}Parse:")
-    print(f"  {sample}{RESET}")
+    print(f"{CYAN}  {s}{RESET}")
     print()
     print(f"""{YELLOW}Sample:{RED}""")
-    p1 = part1(sample)
+    p1 = part1(parse(sample))
     print(f"{YELLOW}  Part 1: {p1}{RED}")
-    p2 = part2(sample)
+    p2 = part2(parse(sample))
     if p2 is not None:
         print(f"{YELLOW}  Part 2: {p2}{RED}")
     print()
-    print(f"""{GREEN}Actual:{RED}""")
-    p1 = part1(actual)
-    print(f"{GREEN}  Part 1: {p1}{RED}")
-    p2 = part2(actual)
-    if p2 is not None:
-        print(f"{GREEN}  Part 2: {p2}{RESET}")
+    if actual.strip():
+        print(f"""{GREEN}Actual:{RED}""")
+        p1 = part1(parse(actual))
+        print(f"{GREEN}  Part 1: {p1}{RED}")
+        p2 = part2(parse(actual))
+        if p2 is not None:
+            print(f"{GREEN}  Part 2: {p2}{RESET}")
 
 
 actual = """
