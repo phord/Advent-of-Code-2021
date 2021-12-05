@@ -97,7 +97,6 @@ def part2(input):
 ## ===================================================
 
 from colorama import Fore, Style
-from copy import deepcopy
 
 def runAll(sample, actual):
     CYAN = Fore.CYAN
