@@ -1,5 +1,9 @@
 #!/bin/python3
 
+digits = "0123456789"
+numbers = "+-." + digits
+alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
 sample = """
 0,9 -> 5,9
 8,0 -> 0,8
@@ -18,14 +22,8 @@ def parse(input):
     for row in input.splitlines():
         if not row:
             continue
-        fields = row.split('->')
-        f0 = fields[0].split(',')
-        f1 = fields[1].split(',')
-        x0=int(f0[0])
-        y0=int(f0[1])
-        x1=int(f1[0])
-        y1=int(f1[1])
-        segs.append((x0,y0,x1,y1))
+        fields = tuple(parse_fields(row, digits))
+        segs.append(fields)
     return segs
 
 def part1(input):
@@ -62,6 +60,39 @@ def map(input, diagonals):
 ## ===================================================
 
 from colorama import Fore, Style
+
+# Returns a list of words containing wordchars
+# includes "words" of non-wordchars if keep_delim=True
+# Converts words made of numbers into integers instead of strings
+# parse_fields(" This is   11  tests.  ",digits+alpha) = ["This", "is", 11, "tests"]
+def parse_fields(row, wordchars, keep_delim = False):
+    f=[]
+    word = ''
+    delim = ''
+    for x in row:
+        if x in wordchars:
+            if delim and keep_delim:
+                f.append(delim)
+            delim = ''
+            word += x
+        else:
+            if word:
+                if all([a in digits for a in word]):
+                    word = int(word)
+                f.append(word)
+            word = ''
+            delim += x
+
+    if delim and keep_delim:
+        f.append(delim)
+    elif word:
+        if all([a in digits for a in word]):
+            word = int(word)
+        f.append(word)
+
+
+    return f
+
 
 def runAll(sample, actual):
     CYAN = Fore.CYAN

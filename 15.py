@@ -1,23 +1,60 @@
 #!/bin/python3
 
+digits = "0123456789"
+numbers = "+-." + digits
+alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
 sample = """
 """
 
 def parse(input):
-    lines = [x.split() for x in input.splitlines() if x]
+    lines = [parse_fields(x,digits+alpha) for x in input.splitlines() if x]
     return lines
 
-def part1(input):
+def part1(input, part2=False):
     return None
 
 
 def part2(input):
-    return None
+    return part1(input, True)
 
 
 ## ===================================================
 
 from colorama import Fore, Style
+
+# Returns a list of words containing wordchars
+# includes "words" of non-wordchars if keep_delim=True
+# Converts words made of numbers into integers instead of strings
+# parse_fields(" This is   11  tests.  ",digits+alpha) = ["This", "is", 11, "tests"]
+def parse_fields(row, wordchars, keep_delim = False):
+    f=[]
+    word = ''
+    delim = ''
+    for x in row:
+        if x in wordchars:
+            if delim and keep_delim:
+                f.append(delim)
+            delim = ''
+            word += x
+        else:
+            if word:
+                if all([a in digits for a in word]):
+                    word = int(word)
+                f.append(word)
+            word = ''
+            delim += x
+
+    if delim and keep_delim:
+        f.append(delim)
+    elif word:
+        if all([a in digits for a in word]):
+            word = int(word)
+        f.append(word)
+
+
+    return f
+
 
 def runAll(sample, actual):
     CYAN = Fore.CYAN
