@@ -18,12 +18,13 @@ def parse(input):
     for row in input.splitlines():
         if not row:
             continue
-        fields = row.split(',')
-        x0=int(fields[0])
-        y1=int(fields[2])
-        fields = fields[1].split(' ')
-        y0=int(fields[0])
-        x1=int(fields[2])
+        fields = row.split('->')
+        f0 = fields[0].split(',')
+        f1 = fields[1].split(',')
+        x0=int(f0[0])
+        y0=int(f0[1])
+        x1=int(f1[0])
+        y1=int(f1[1])
         segs.append((x0,y0,x1,y1))
     return segs
 
@@ -33,12 +34,15 @@ def part1(input):
 def part2(input):
     return map(input, True)
 
+def sign(x):
+    return 0 if not x else x/abs(x)
+
 def map(input, diagonals):
     board = {}
     for x in input:
         (x0,y0,x1,y1) = x
-        dx = 0 if x1 == x0 else (x1-x0)//abs(x1-x0)
-        dy = 0 if y1 == y0 else (y1-y0)//abs(y1-y0)
+        dx = sign(x1-x0)
+        dy = sign(y1-y0)
         if not diagonals and dx and dy:
             continue
 
