@@ -28,68 +28,20 @@ def parse(input):
     return segs
 
 def part1(input):
-    mn = 100
-    mx = 0
-    for x in input:
-        mx = max(mx, max(x))
-        mn = min(mn, min(x))
-
-    # print(mn, mx)
-
-    board = {}
-
-    for x in input:
-        mx = max(mx, max(x))
-        (x0,y0,x1,y1) = x
-        dx = 0 if x1 == x0 else (x1-x0)//abs(x1-x0)
-        dy = 0 if y1 == y0 else (y1-y0)//abs(y1-y0)
-        if dx and dy:
-            continue
-        # print(x, dx, dy)
-        while True:
-            if (x0,y0) not in board:
-                board[(x0,y0)] = 0
-            board[(x0,y0)] += 1
-            if x0 == x1 and y0 == y1:
-                break
-            x0 += dx
-            y0 += dy
-
-    count = 0
-    for x in board:
-        if board[x] > 1:
-            count += 1
-    # print(board)
-    # for y in range(10):
-    #     row = []
-    #     for x in range(10):
-    #         if (x,y) in board:
-    #             row.append(board[(x,y)])
-    #         else:
-    #             row.append('.')
-    #     print(''.join([str(x) for x in row]))
-
-    return count
-
+    return map(input, False)
 
 def part2(input):
-    mn = 100
-    mx = 0
-    for x in input:
-        mx = max(mx, max(x))
-        mn = min(mn, min(x))
+    return map(input, True)
 
-    # print(mn, mx)
-
+def map(input, diagonals):
     board = {}
-
     for x in input:
-        mx = max(mx, max(x))
         (x0,y0,x1,y1) = x
         dx = 0 if x1 == x0 else (x1-x0)//abs(x1-x0)
         dy = 0 if y1 == y0 else (y1-y0)//abs(y1-y0)
+        if not diagonals and dx and dy:
+            continue
 
-        # print(x, dx, dy)
         while True:
             if (x0,y0) not in board:
                 board[(x0,y0)] = 0
@@ -99,21 +51,8 @@ def part2(input):
             x0 += dx
             y0 += dy
 
-    count = 0
-    for x in board:
-        if board[x] > 1:
-            count += 1
-    # print(board)
-    # for y in range(10):
-    #     row = []
-    #     for x in range(10):
-    #         if (x,y) in board:
-    #             row.append(board[(x,y)])
-    #         else:
-    #             row.append('.')
-    #     print(''.join([str(x) for x in row]))
+    return len([ x for x in board.values() if x > 1])
 
-    return count
 
 
 ## ===================================================
