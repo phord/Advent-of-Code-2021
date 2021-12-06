@@ -3,20 +3,32 @@
 from core.skel import *
 
 sample = """
+3,4,3,1,2
 """
 
 def parse(input):
-    lines = [parse_fields(x,digits+alpha) for x in input.splitlines() if x]
-    return lines
+    lines = [parse_fields(x,digits+alpha) for x in input.splitlines() if x][0]
+    fish = [0]*9
+    for x in lines:
+        fish[x] += 1
+    return fish
 
 def part1(input, part2=False):
-    return None
+    out = input
+    d = 18
+    for d in range(256 if part2 else 80):
+        newfish = out[0]
+        out = out[1:]
+        out[6] += newfish
+        out.append(newfish)
+
+    return sum(out)
 
 
 def part2(input):
     return part1(input, True)
 
 actual = """
-"""
+1,1,1,1,1,1,1,4,1,2,1,1,4,1,1,1,5,1,1,1,1,1,1,1,1,1,1,1,1,5,1,1,1,1,3,1,1,2,1,2,1,3,3,4,1,4,1,1,3,1,1,5,1,1,1,1,4,1,1,5,1,1,1,4,1,5,1,1,1,3,1,1,5,3,1,1,1,1,1,4,1,1,1,1,1,2,4,1,1,1,1,4,1,2,2,1,1,1,3,1,2,5,1,4,1,1,1,3,1,1,4,1,1,1,1,1,1,1,4,1,1,4,1,1,1,1,1,1,1,2,1,1,5,1,1,1,4,1,1,5,1,1,5,3,3,5,3,1,1,1,4,1,1,1,1,1,1,5,3,1,2,1,1,1,4,1,3,1,5,1,1,2,1,1,1,1,1,5,1,1,1,1,1,2,1,1,1,1,4,3,2,1,2,4,1,3,1,5,1,2,1,4,1,1,1,1,1,3,1,4,1,1,1,1,3,1,3,3,1,4,3,4,1,1,1,1,5,1,3,3,2,5,3,1,1,3,1,3,1,1,1,1,4,1,1,1,1,3,1,5,1,1,1,4,4,1,1,5,5,2,4,5,1,1,1,1,5,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,5,1,1,1,1,1,1,3,1,1,2,1,1"""
 
 runAll(sample, actual, parse, part1, part2)

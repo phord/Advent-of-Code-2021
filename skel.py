@@ -3,6 +3,7 @@
 from core.skel import *
 
 sample = """
+this is  a 12   test 15 . 73 how'd I do?
 """
 
 def parse(input):
