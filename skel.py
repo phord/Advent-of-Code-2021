@@ -3,8 +3,9 @@
 from core.skel import *
 
 sample = """
-this is  a 12   test 15 . 73 how'd I do?
 """
+answer1 = None
+answer2 = None
 
 def parse(input):
     lines = [parse_fields(x,digits+alpha) for x in input.splitlines() if x]
@@ -17,7 +18,6 @@ def part1(input, part2=False):
 def part2(input):
     return part1(input, True)
 
-actual = """
-"""
 
-runAll(sample, actual, parse, part1, part2)
+from aocd import data
+runAll(sample, data, parse, part1, part2, answer1, answer2)
