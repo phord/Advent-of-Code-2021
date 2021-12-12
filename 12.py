@@ -40,29 +40,22 @@ def parse(input):
         edges[b].add(a)
     return edges
 
-count = 0
 def traverse(edges, cave, path, visited, once):
-    global count
     if cave != 'start' and cave in visited:
         once = True
     if cave >= 'a':
         visited = visited | set([cave])
-    path = [x for x in path]
+    path = path[:]
     path.append(cave)
-    if cave == 'end':
-        count += 1
-        # print(f"{count}. {once} {','.join(path)}")
-        return
 
-    for dest in edges[cave] - (visited if once else set(['start'])):
-        traverse(edges, dest, path, visited, once)
+    if cave == 'end':
+        yield ','.join(path)
+    else:
+        for dest in edges[cave] - (visited if once else set(['start'])):
+            yield from traverse(edges, dest, path, visited, once)
 
 def part1(edges, part2=False):
-    global count
-    count = 0
-    traverse(edges, 'start', [], set(), not part2)
-    return count
-
+    return len(list(traverse(edges, 'start', [], set(), not part2)))
 
 def part2(edges):
     return part1(edges, True)
