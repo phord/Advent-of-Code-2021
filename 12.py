@@ -13,8 +13,8 @@ A-end
 b-end
 """
 
-answer1 = None
-answer2 = None
+answer1 = 10
+answer2 = 36
 
 def parse(input):
     edges = defaultdict(set)
