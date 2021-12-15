@@ -56,6 +56,44 @@ def dump(grid):
         print(row)
     print()
 
+def neighbors(grid, pos, memo):
+    if pos in memo:
+        return memo[pos]
+
+    height = len(grid)
+    width = len(grid[0])
+    y,x = pos
+    ret = frozenset()
+    for X in range(max([0,x-1]), min([width, x+2])):
+        if X!=x:
+            ret = ret | frozenset([(y,X)])
+    for Y in range(max([0,y-1]), min([height, y+2])):
+        if Y!=y :
+            ret = ret | frozenset([(Y,x)])
+
+    memo[pos] = ret
+    # print(f"{pos}: {set(ret)}")
+    return ret
+
+def optimize(grid, cost, pos, memo):
+    height = len(grid)
+    width = len(grid[0])
+    y,x = pos
+    t = grid[y][x]
+    opts = []
+    for n in neighbors(grid, pos, memo):
+        opts.append(cost[n])
+
+    # print(f"{pos}: {neighbors(grid, pos, memo)}")
+
+    prev = cost[pos]
+    new = t + min(opts)
+    if prev > new:
+        # print("Improved ", pos)
+        cost[(y,x)] = new
+        return neighbors(grid, pos, memo) | frozenset([pos])
+    return frozenset()
+
 def part1(grid, part2=False):
     height = len(grid)
     width = len(grid[0])
@@ -76,32 +114,16 @@ def part1(grid, part2=False):
             else:
                 cost[(y,x)] = t
 
-    changed = True
+    memo = {}
+    changed = cost.keys()
     while changed:
-        changed = False
-        print(cost[(0,0)])
-        for y in range(height):
-            for x in range(width):
-                t = grid[y][x]
-                opts = []
-                if y < height-1:
-                    opts.append(cost[(y+1, x)])
+        # dump(to_grid(grid, cost))
 
-                if x < width-1:
-                    opts.append(cost[(y, x+1)])
-
-                if y > 0:
-                    opts.append(cost[(y-1, x)])
-
-                if x > 0:
-                    opts.append(cost[(y, x-1)])
-
-                if opts:
-                    prev = cost[(y,x)]
-                    new = t + min(opts)
-                    if prev > new:
-                        cost[(y,x)] = new
-                        changed = True
+        print(len(changed))
+        affected = set()
+        for pos in changed:
+            affected |= set(optimize(grid, cost, pos, memo))
+        changed = affected
 
     # dump(grid)
     # dump(to_grid(grid, cost))
