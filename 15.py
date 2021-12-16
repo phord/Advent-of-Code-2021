@@ -3,6 +3,8 @@
 from core.skel import *
 from collections import defaultdict
 
+import networkx as nx
+
 sample = """
 1163751742
 1381373672
@@ -75,60 +77,20 @@ def neighbors(grid, pos, memo):
     # print(f"{pos}: {set(ret)}")
     return ret
 
-def optimize(grid, cost, pos, memo):
-    height = len(grid)
-    width = len(grid[0])
-    y,x = pos
-    t = grid[y][x]
-    opts = []
-    for n in neighbors(grid, pos, memo):
-        opts.append(cost[n])
-
-    # print(f"{pos}: {neighbors(grid, pos, memo)}")
-
-    prev = cost[pos]
-    new = t + min(opts)
-    if prev > new:
-        # print("Improved ", pos)
-        cost[(y,x)] = new
-        return neighbors(grid, pos, memo) | frozenset([pos])
-    return frozenset()
-
 def part1(grid, part2=False):
     height = len(grid)
     width = len(grid[0])
 
     cost = {}
-    for y in range(height-1, -1, -1):
-        for x in range(width-1, -1, -1):
-            t = grid[y][x]
-            opts = []
-            if y < height-1:
-                opts.append(cost[(y+1, x)])
-
-            if x < width-1:
-                opts.append(cost[(y, x+1)])
-
-            if opts:
-                cost[(y,x)] = t + min(opts)
-            else:
-                cost[(y,x)] = t
-
     memo = {}
-    changed = cost.keys()
-    while changed:
-        # dump(to_grid(grid, cost))
+    G = nx.MultiDiGraph()
+    for y in range(height):
+        for x in range(width):
+            cost = grid[y][x]
+            for n in neighbors(grid, (y,x), memo):
+                G.add_edge(n, (y,x), weight=cost)
 
-        print(len(changed))
-        affected = set()
-        for pos in changed:
-            affected |= set(optimize(grid, cost, pos, memo))
-        changed = affected
-
-    # dump(grid)
-    # dump(to_grid(grid, cost))
-    return cost[(0, 0)] - grid[0][0]
-
+    return nx.shortest_path_length(G, (0,0), (height-1, width-1), weight='weight', method='bellman-ford')
 
 def part2(grid):
     grid = times5(grid)
