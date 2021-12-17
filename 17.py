@@ -35,24 +35,23 @@ def on_target(pos, target):
 def will_hit(target, vel):
     x1, x2, y1, y2 = target
     dx, dy = vel
+
+    # all the y positions
+    y = 0
+    x = 1
     t = []
-    px = 0
-    for x in range(abs(dx)+1):
-        px += dx-x
-        if x1 <= px <= x2:
-            t.append(x+1)
+    while dy > 0 or y >= y1:
+        y += dy
+        dy -= 1
+        if y1 <= y <= y2:
+            t.append(x)
 
-    if x1 <= px <= x2:
-        t.extend(range(x+1,x+5000))
-
-    # TODO remember range that matched and adjust search from there on the next attempt?
-
-    # all the y positions when x is in range
-    py = [dy * t0 - pascal[t0-1] for t0 in t]
+    # all the x positions when y is in range
+    px = [dx * t0 - pascal[t0-1] for t0 in t if t0 <= dx+1]
 
     # if vel[0] in [6,7]:
     #     print(vel, t, py)
-    return any([y1<= p <= y2 for p in py])
+    return any([x1<= p <= x2 for p in px])
 
 def trial(input, vel):
     best = 0
