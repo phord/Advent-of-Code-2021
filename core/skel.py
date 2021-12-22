@@ -27,7 +27,7 @@ def parse_fields(row, wordchars, keep_delim = False):
             word += x
         else:
             if word:
-                if word[0] in numbers and all([a in digits for a in word[1:]]):
+                if word[0] in numbers and all([a in '-+'+digits for a in word[1:]]):
                     word = int(word)
                 f.append(word)
             word = ''
