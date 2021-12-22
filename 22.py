@@ -1,6 +1,7 @@
 #!/bin/python3
 
 from core.skel import *
+from functools import lru_cache
 
 sample = """
 on x=10..12,y=10..12,z=10..12
@@ -39,7 +40,7 @@ sample="""
     on x=-54112..-39298,y=-85059..-49293,z=-27449..7877
     on x=967..23432,y=45373..81175,z=27513..53682"""
 
-sample2="""
+sample="""
     on x=-5..47,y=-31..22,z=-19..33
     on x=-44..5,y=-27..21,z=-14..35
     on x=-49..-1,y=-11..42,z=-10..38
@@ -100,9 +101,10 @@ sample2="""
     off x=-70369..-16548,y=22648..78696,z=-1892..86821
     on x=-53470..21291,y=-120233..-33476,z=-44150..38147
     off x=-93533..-4276,y=-16170..68771,z=-104985..-24507
-    """
-answer1 = None
-answer2 = None
+"""
+
+answer1 = 474140
+answer2 = 2758514936282235
 
 def parse(input):
     lines = [parse_fields(x,digits+alpha+'-') for x in input.splitlines() if x]
@@ -183,7 +185,8 @@ def cleave_x(cube, cx):
     if x1 < cx or x0 > cx:
         return set([cube])
 
-    cubes.add((x0,cx-1,y0,y1,z0,z1))
+    if x0 < cx:
+        cubes.add((x0,cx-1,y0,y1,z0,z1))
     cubes.add((cx,x1,y0,y1,z0,z1))
     return cubes
 
@@ -194,7 +197,8 @@ def cleave_y(cube, cy):
     if y1 < cy or y0 > cy:
         return set([cube])
 
-    cubes.add((x0,x1,y0,cy-1,z0,z1))
+    if y0 < cy:
+        cubes.add((x0,x1,y0,cy-1,z0,z1))
     cubes.add((x0,x1,cy,y1,z0,z1))
     return cubes
 
@@ -205,26 +209,36 @@ def cleave_z(cube, cz):
     if z1 < cz or z0 > cz:
         return set([cube])
 
-    cubes.add((x0,x1,y0,y1,z0,cz-1))
+    if z0 < cz:
+        cubes.add((x0,x1,y0,y1,z0,cz-1))
     cubes.add((x0,x1,y0,y1,cz,z1))
     return cubes
 
 # Split cube at x, y and z
 def cleave(cube, x, y, z):
+    # print(f"Cleave {cube}  on x:{x} y:{y} z:{z}")
     cubes = cleave_x(cube, x)
+    # print(f"  on x:{x}  {cubes}")
     c2 = set()
     for c in cubes:
         c2 |= cleave_y(c, y)
+    # print(f"  on y:{y}  {c2}")
     c3 = set()
     for c in c2:
         c3 |= cleave_z(c, z)
+    # print(f"  on z:{z}  {c3}")
     return c3
 
-# returns a set of cubes that define the up-to-8 cubes that do not intersect cube2 and the one that does
-def intersect(cube1, cube2):
-    xa0,ya0,za0,xa1,ya1,za1 = cube1
-    xb0,yb0,zb0,xb1,yb1,zb1 = cube2
+# Find the size of the occupied universe
+def universe(cubes):
+    axes = []
+    for x in range(6):
+        axes.append([c[1][x] for c in cubes])
+    size = (min(axes[0]),max(axes[0]),min(axes[1]),max(axes[1]),min(axes[2]),max(axes[2]))
+    return size
 
+# returns a set of cubes that define the sliced-up cubes that overlap and don't overlap
+def intersect(cube1, cube2):
     xsplit = overlap_segment(*cube1[0:2], *cube2[0:2])
     if xsplit:
         ysplit = overlap_segment(*cube1[2:4], *cube2[2:4])
@@ -234,12 +248,12 @@ def intersect(cube1, cube2):
                 tcubes1 = cleave(cube1, xsplit[0], ysplit[0], zsplit[0])
                 cubes1 = set()
                 for c in tcubes1:
-                    cubes1 |= cleave(c, xsplit[1], ysplit[1], zsplit[1])
+                    cubes1 |= cleave(c, xsplit[1]+1, ysplit[1]+1, zsplit[1]+1)
 
                 tcubes2 = cleave(cube2, xsplit[0], ysplit[0], zsplit[0])
                 cubes2 = set()
                 for c in tcubes2:
-                    cubes2 |= cleave(c, xsplit[1], ysplit[1], zsplit[1])
+                    cubes2 |= cleave(c, xsplit[1]+1, ysplit[1]+1, zsplit[1]+1)
 
                 return (cubes1, cubes2)
 
@@ -250,8 +264,6 @@ def intersect(cube1, cube2):
 def remove_cube(cube1, cube2):
     if inside(cube1, cube2):
         return set()
-    elif inside(cube2, cube1):
-        return set([cube1])
 
     c1, c2 = intersect(cube1, cube2)
     # print(f"  c1: {sum([cube_size(x) for x in c1])} {c1}")
@@ -263,100 +275,47 @@ def remove_cube(cube1, cube2):
     return c1 - c2
 
 
-# If cubes don't intersect, return None
-# else return {cube1 + (cube2 - cube1)}
-def add_cube(cube1, cube2):
-    if inside(cube1, cube2):
-        return set([cube2])
-    elif inside(cube2, cube1):
-        return set([cube1])
-
-    c1, c2 = intersect(cube1, cube2)
-    # print(f"  c1: {sum([cube_size(x) for x in c1])} {c1}")
-    # print(f"  c2: {sum([cube_size(x) for x in c2])} {c2}")
-    if len(c1)==1 and len(c2)==1 and c1 != c2:
-        # No overlap
-        return None
-    # ans = set([cube1])
-    # for c in c2:
-    #     if not inside(c, cube1):
-    #         ans.add(c)
-    # return ans
-    return c1 | c2
-
-# def add_cuboid(cuboids, cube):
-#     add = set()
-#     remove = set()
-#     for c in cuboids:
-#         c1 = add(c, cube)
-#         if c1 is None:
-#             continue
-
-#         # Cubes overlap
-#         remove.add(c)
-#         add |= c1
-#     if not remove:
-#         # There was no overlap
-#         cuboids.add(cube)
-#     else:
-#         # FIXME: We may overlap with more than one original cube. In that case, we will add duplicate
-#         # regions for our "add". How do we weed out duplicates? Do I have to cross-add every cube with each other?
-#         for cc in remove:
-#             cuboids.remove(cc)
-#         for cc in add:
-#             cuboids.add(cc)
-
-# def remove_cuboid(cuboids, cube):
-#     add = set()
-#     remove = set()
-#     for c in cuboids:
-#         c1 = remove(c, cube)
-#         if c1 is None:
-#             continue
-
-#         # Cubes overlap
-#         remove.add(c)
-#         add |= c1
-#     for cc in remove:
-#         cuboids.remove(cc)
-#     for cc in add:
-#         cuboids.add(cc)
-
-def dupes(cubes):
-    for x in range(9,14):
-        for y in range(9,14):
-            for z in range(9,14):
-                testcube = (x,x,y,y,z,z)
-                dups = [cube for cube in cubes if inside(testcube, cube) ]
-                if len(dups) > 1:
-                    print(f"overlap here {testcube}:    {dups}")
-
-def diff(cubes1, cubes2):
-    for x in range(9,14):
-        for y in range(9,14):
-            for z in range(9,14):
-                testcube = (x,x,y,y,z,z)
-                any1 = not not [cube for cube in cubes1 if inside(testcube, cube) ]
-                any2 = not not [cube for cube in cubes2 if inside(testcube, cube) ]
-                if any1 != any2:
-                    print(f"missing cube {testcube}:")
-                    for c in sorted(list(cubes1)):
-                        print(f"   {cube_size(c)}  {c}")
-                    print("---")
-                    for c in sorted(list(cubes2)):
-                        print(f"   {cube_size(c)}  {c}")
-                    return True
-    return False
-
 def total_size(cubes):
-    return sum([cube_size(x) for x in cubes])
+    total = 0
+    all = list(cubes)
+    for a,add in enumerate(all):
+        print(f"{a+1}. {add}")
+        # print (f"{a+1}. + {t} = {total} - {dupes} = {total-dupes}")
+        keep, cube = add
+        if not keep:
+            continue
+        univ = frozenset([cube])
+        for sub in all[a+1:]:
+            univ = remove_from_cuboids(univ, sub[1])
+        total += sum([cube_size(x) for x in univ])
+    return total #sum([cube_size(x) for x in cubes])
+
+def remove_from_cuboids(cuboids, cube):
+    add = set()
+    remove = set()
+    ## Remove cube
+    for c in cuboids:
+        c1 = remove_cube(c, cube)
+        if c1 is None:
+            continue
+
+        # Cubes overlap
+        remove.add(c)
+        add |= c1
+
+    cuboids -= remove
+    cuboids |= add
+    return cuboids
+
 
 def part2(input):
-    cuboids = set()
+    cuboids = []
 
     # prev = (0,0,0,0,0,0)
 
     for row in input:
+        if not row:
+            continue
         cmd,_,x0,x1,_,y0,y1,_,z0,z1 = row
         x0=int(x0)
         y0=int(y0)
@@ -370,73 +329,16 @@ def part2(input):
 
         cube = (x0,x1,y0,y1,z0,z1)
 
-        add = set()
-        remove = set()
-        for c in cuboids:
-            if cmd == 'on':
-                c1 = add_cube(c, cube)
-            else:
-                c1 = remove_cube(c, cube)
-
-            if c1 is None:
-                continue
-
-            # Cubes overlap
-            remove.add(c)
-            add |= c1
-        if not remove and cmd == 'on':
-            # There was no overlap; add the virgin cube
-            cuboids.add(cube)
+        if cmd == 'on':
+            cuboids.append((True, cube))
         else:
-            for cc in remove:
-                cuboids.remove(cc)
+            cuboids.append((False, cube))
+            # cuboids = set(remove_from_cuboids(frozenset(cuboids), cube))
 
-            # We may overlap with more than one original cube. In that case, we will add duplicate regions for our
-            # "add". How do we weed out duplicates? Do I have to cross-add every cube with each other before I add them?
-            while True:
-                # print("Loop:",len(add), total_size(add))
-                # dupes(add)
-                newadd = set()
-                ADD = list(add)
-                for A in range(len(ADD)):
-                    newadd_b = set()
-                    a = ADD[A]
-                    for B in range(A+1,len(ADD)):
-                        b = ADD[B]
-                        c1 = add_cube(a,b)
-                        if c1 is None:
-                            continue
+        print(row, f"Num cubes={len(cuboids)}")#"  Size = {universe(cuboids)}")#"   Total size={total_size(cuboids)}")
 
-                        newadd_b |= c1
-                    if newadd_b:
-                        newadd |= newadd_b
-                    else:
-                        # print(f"No overlap: {cube_size(a)}  {a}")
-                        newadd.add(a)
-                assert not diff(add, newadd)
-                print(total_size(add))
-                print(total_size(newadd))
-                diff(add, newadd)
-                if frozenset(add) == frozenset(newadd):
-                    break
-                if total_size(add) == total_size(newadd):
-                    break
-                add = newadd
-
-            for cc in add:
-                cuboids.add(cc)
-
-        # XXX
-        # dupes(cuboids)
-
-        # c1,c2 = intersect(cube, prev)
-        # print(row, len(c1), len(c2))
-        # assert cube_size(cube) == sum([cube_size(x) for x in c1])
-        # prev = cube
-        print(row, f"Num cubes={len(cuboids)}, Total size={sum([cube_size(x) for x in cuboids])}")
-
-    return sum([cube_size(x) for x in cuboids])
+    print(f"Size = {universe(cuboids)}")
+    return total_size(cuboids)
 
 from aocd import data
-data=""
 runAll(sample, data, parse, part1, part2, answer1, answer2)
