@@ -9,6 +9,15 @@ sample = "xxx"
 ###B#C#B#D###
   #A#D#C#A#
   #########
+
+#############
+#...........#
+###B#C#B#D###
+  #D#C#B#A#  <-- Part 2
+  #D#B#A#C#  <-- Part 2
+  #A#D#C#A#
+  #########
+
 answer1 = None
 answer2 = None
 
@@ -233,52 +242,57 @@ def estimate_energy_needed(data):
     # E should already be a very liberal estimate, on the low side.  But we're missing opportunities somehow.
     return max(0, E - 1200)
 
-solutions = []
-def solve(data, path):
-    # Recursed too far
-    if (len(path[1]) > 500):
-        return
+class Game:
+    def __init__(self, data, E=0):
+        self.data = tuple(data)
+        self.energy = E
+        self.dead = False
+        self.estimate = estimate_energy_needed(self.data) + E
 
-    if solutions:
-        upper_bound = solutions[-1][0]
-        E = estimate_energy_needed(data)
-        if upper_bound < path[0] + E:
-            print(upper_bound, E, data)    ## Optimistic solution cost
+        if solved(self.data):
+            if not solutions or self.energy < min(solutions):
+                solutions.append(self.energy)
+                print(min(solutions), self.data)    ## Lowest score so far
+            self.dead = True
+        elif solutions:
+            upper_bound = min(solutions)
+            if upper_bound <= self.energy:
+                self.dead = True
+
+    def next(self):
+        if self.dead:
             return
 
+        possmoves = [(distance, destination, pod) for pod in set(range(8)) for destination, distance in moves(self.data, pod)]
+        for distance, destination, pod in possmoves:
+            data = list(self.data)
+            data[pod] = destination
+            yield Game(data, self.energy + energy[pod] * distance)
 
-    print(data, path[0], [x[1] for x in path[1]] )
-    if solved(data):
-        solutions.append(path)
-        return
 
-    # canmove = True
-    # while canmove:
-    #     canmove = False
-    gohome = set([pod for pod in range(8) if can_go_home(data, pod)])
 
-    best_home  = sorted([(distance, destination, pod) for pod in gohome for destination, distance in moves(data, pod)])
-    best_hallway  = sorted([(distance, destination, pod) for pod in set(range(8)) - gohome for destination, distance in moves(data, pod)])
-    best = best_home
-    best.extend(best_hallway)
-    expense, path = path
-    # if not best:
-        # print(" NO MORE MOVES   "*5)
-    for distance, destination, pod in best:
-        e = distance * energy[pod]
-        d = list(data)
-        p = path[:]
-        p.append((pod, data[pod], destination, e))
-        # print(f"Move {d[pod]} -> {destination}")
-        d[pod] = destination
-        # dump(d)
-        solve(tuple(d), (expense + e, p))
+solutions = []
+def solve(game):
+
+    games = [game]
+
+    depth = 1
+    total = 1
+    while games:
+        print(f"{depth}. {len(games)} / {total}     {min(solutions) if solutions else 0}")
+        depth += 1
+        next = []
+        for game in games:
+            next.extend(game.next())
+        total = len(next)
+        games = sorted(next, key=lambda _: _.estimate)[:225000]
 
 def part1(data, part2=False):
-    solutions = []
-    solve(tuple(data), (0, []))
-    print(len(solutions), min(solutions))
-    return min(solutions)[0]
+    global solutions
+    solutions = [15113]
+    solve(Game(data))
+    print(len(solutions), min(solutions) if solutions else 0)
+    return min(solutions)
 
 
 def part2(input):
