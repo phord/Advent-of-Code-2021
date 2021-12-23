@@ -196,8 +196,10 @@ def moves(data, pod):
 def solved(data):
     return all([x in room[pod//4] for pod, x in enumerate(data)])
 
+def normalize(data):
+    return tuple([frozenset(data[p:p+4]) for p in range(0,16,4) ])
+
 def dump(data, highlight = 99):
-    d = set(data)
     revd = ['.']*27
     for pod, pos in enumerate(data):
         revd[pos+8] = (Fore.CYAN if highlight==pod else "") + chr(65+pod//4) + Fore.RED
@@ -290,10 +292,12 @@ class Game:
                 continue
             data = list(self.data)
             data[pod] = destination
-            data = tuple(data)
-            if data in seen_game:
+
+            df = normalize(data)
+            if df in seen_game:
                 continue
-            seen_game.add(data)
+            seen_game.add(df)
+
             yield Game(data, self, self.energy + energy[pod] * distance)
 
 
